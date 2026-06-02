@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SiGAP — Sistem Informasi Geospasial Akses Pemadam</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="sp-box">
+    <div class="sp-logo-wrap">
+      <img src="assets/logo.png" alt="SiGAP" class="sp-logo"
+        onerror="this.style.display='none';document.getElementById('sp-fb').style.display='flex'"/>
+      <div class="sp-fb" id="sp-fb" style="display:none">
+        <span>Si</span><span style="color:#ef4444">GAP</span>
+      </div>
+    </div>
+    <div class="sp-title">Si<span>GAP</span></div>
+    <div class="sp-sub">Sistem Informasi Geospasial Akses Pemadam</div>
+    <div class="sp-place">Kelurahan Keputih · Sukolilo · Surabaya</div>
+    <div class="sp-progress"><div class="sp-bar"></div></div>
+  </div>
+</div>
+
+<!-- FIRE INPUT MODAL -->
+<div id="fire-input-modal" style="display:none" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span>🔥 Tandai Titik Kebakaran</span>
+      <button class="modal-close" onclick="closeFireModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Klik lokasi di peta atau masukkan koordinat secara manual.</p>
+      <button class="modal-pick-btn" onclick="pickFireFromMap()">
+        <svg viewBox="0 0 20 20" width="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><circle cx="10" cy="10" r="3"/><line x1="10" y1="2" x2="10" y2="5"/><line x1="10" y1="15" x2="10" y2="18"/><line x1="2" y1="10" x2="5" y2="10"/><line x1="15" y1="10" x2="18" y2="10"/></svg>
+        Klik di Peta
+      </button>
+      <div class="modal-divider">— atau masukkan koordinat —</div>
+      <div class="modal-coord-row">
+        <div class="modal-field">
+          <label>Latitude</label>
+          <input id="fi-lat" type="number" step="0.00001" placeholder="-7.29334"/>
+        </div>
+        <div class="modal-field">
+          <label>Longitude</label>
+          <input id="fi-lng" type="number" step="0.00001" placeholder="112.79406"/>
+        </div>
+      </div>
+      <button class="modal-confirm-btn" onclick="confirmFireCoord()">
+        Konfirmasi Koordinat
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-brand">
+      <img src="assets/logo.png" class="hdr-logo" alt="SiGAP"
+        onerror="this.style.display='none';document.getElementById('hdr-fb').style.display='flex'"/>
+      <div class="hdr-logo-fb" id="hdr-fb" style="display:none">
+        <span>Si</span><span style="color:#ef4444">GAP</span>
+      </div>
+      <div class="hdr-brand-txt">
+        <div class="hdr-name">Si<span>GAP</span></div>
+        <div class="hdr-sub">AKSES PEMADAM · KEPUTIH</div>
+      </div>
+    </div>
+
+    <div class="hdr-search-wrap">
+      <div class="hdr-search">
+        <svg class="hs-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="8.5" cy="8.5" r="5.5"/><line x1="13" y1="13" x2="17" y2="17" stroke-linecap="round"/>
+        </svg>
+        <input id="search-q" type="text" placeholder="Cari jalan, tempat, nomor…"
+          oninput="onSearchInput(this.value)" onkeydown="onSearchKey(event)" autocomplete="off"/>
+        <button class="hs-clear" id="hs-clear" onclick="clearSearch()" style="display:none">✕</button>
+      </div>
+      <div id="search-dd" class="search-dd"></div>
+    </div>
+
+    <div class="hdr-right">
+      <!-- Tombol zoom ke Keputih -->
+      <button class="hdr-icon-btn" onclick="zoomToKeputih()" title="Zoom ke Keputih">
+        <svg viewBox="0 0 20 20" width="18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M10 2C6.686 2 4 4.686 4 8c0 5 6 10 6 10s6-5 6-10c0-3.314-2.686-6-6-6z"/>
+          <circle cx="10" cy="8" r="2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <aside class="side" id="side">
+      <button class="side-toggle" onclick="toggleSide()">
+        <svg id="side-ico" viewBox="0 0 20 20" width="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="13,4 7,10 13,16"/></svg>
+      </button>
+      <div class="side-body" id="side-body">
+
+        <!-- RUTE DARURAT -->
+        <div class="sc">
+          <div class="sc-hdr">
+            <div class="sc-hdr-icon" style="background:#ef4444">
+              <svg viewBox="0 0 16 16" width="12" fill="white"><path d="M8 1C8 1 13 6 12.5 10C12.5 12 11.5 13 10 14C10.5 12.5 9 11 9 11C9 11 8 13.5 6 14.5C4.5 15.2 3 14.5 3 13C3 11 5 9.5 5 9.5C5 9.5 4 11.5 6 12C6 9 8 6 8 1Z"/></svg>
+            </div>
+            RUTE DARURAT
+          </div>
+          <div class="sc-body">
+            <button class="btn-fire" id="btn-fire" onclick="startFire()">
+              <svg viewBox="0 0 20 20" width="15" fill="white"><path d="M10 2C10 2 15.5 7.5 15 12C15 14.5 13.5 16 12 17C12.5 14.5 10.5 13 10.5 13C10.5 13 9 16 6.5 17.5C5 18.3 3.5 17.3 3.5 15.5C3.5 13 6 11.5 6 11.5C6 11.5 5 14 7 14.5C7 11 10 7.5 10 2Z"/><path d="M10 9C10 9 13 12.5 13 15C13 17 11.7 18 10 18.5C8.3 18 7 17 7 15C7 12.5 10 9 10 9Z" fill="#fbbf24"/></svg>
+              Tandai Titik Kebakaran
+            </button>
+            <button class="btn-kumpul" id="btn-kumpul" onclick="startKumpul()">
+              <svg viewBox="0 0 20 20" width="15" fill="currentColor"><circle cx="10" cy="6" r="3.5"/><path d="M4 17Q10 13 16 17" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="4.5" cy="10.5" r="2.5" opacity=".6"/><circle cx="15.5" cy="10.5" r="2.5" opacity=".6"/></svg>
+              Tandai Titik Kumpul
+            </button>
+            <button class="btn-reset" onclick="resetAll()">
+              <svg viewBox="0 0 20 20" width="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 10A7 7 0 1 1 10 3V1L14 5L10 9V7A5 5 0 1 0 15 10Z"/></svg>
+              Reset Semua
+            </button>
+          </div>
+        </div>
+
+        <!-- INFO RUTE -->
+        <div class="sc" id="sc-rute" style="display:none">
+          <div class="sc-hdr">
+            <div class="sc-hdr-icon" style="background:#0891b2">
+              <svg viewBox="0 0 16 16" width="12" fill="none" stroke="white" stroke-width="1.8"><polyline points="2,12 6,5 10,8 14,3"/></svg>
+            </div>
+            INFO RUTE
+          </div>
+          <div class="sc-body" id="rute-cards"></div>
+        </div>
+
+        <!-- LAYER -->
+        <div class="sc">
+          <div class="sc-hdr">
+            <div class="sc-hdr-icon" style="background:#7c3aed">
+              <svg viewBox="0 0 16 16" width="12" fill="none" stroke="white" stroke-width="1.5"><path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5Z"/><path d="M8 2V14M2 5.5L14 10.5M14 5.5L2 10.5" opacity=".5"/></svg>
+            </div>
+            LAYER
+          </div>
+          <div class="sc-body" id="layer-panel-body"></div>
+        </div>
+
+        <!-- LEGENDA -->
+        <div class="sc sc-legend">
+          <div class="sc-hdr">
+            <div class="sc-hdr-icon" style="background:#64748b">
+              <svg viewBox="0 0 16 16" width="12" fill="white"><rect x="2" y="3" width="4" height="4" rx="1"/><rect x="2" y="9" width="4" height="4" rx="1"/><rect x="8" y="3" width="6" height="2" rx="1"/><rect x="8" y="9" width="6" height="2" rx="1"/></svg>
+            </div>
+            LEGENDA
+          </div>
+          <div class="sc-body" id="legend-body"></div>
+        </div>
+
+        <!-- SUMBER DATA -->
+        <div class="sc sc-sumber">
+          <div class="sc-hdr">
+            <div class="sc-hdr-icon" style="background:#0ea5e9">
+              <svg viewBox="0 0 16 16" width="12" fill="white"><rect x="2" y="2" width="12" height="3" rx="1"/><rect x="2" y="7" width="8" height="2" rx="1"/><rect x="2" y="11" width="10" height="2" rx="1"/></svg>
+            </div>
+            SUMBER DATA
+          </div>
+          <div class="sc-body sumber-list">
+            <div class="sumber-item">
+              <div class="sumber-dot" style="background:#e8192c"></div>
+              <div class="sumber-txt">
+                <div class="sumber-name">PMK Pasar Turi Surabaya</div>
+                <div class="sumber-desc">Data Tandon Air</div>
+              </div>
+            </div>
+            <div class="sumber-item">
+              <div class="sumber-dot" style="background:#2563eb"></div>
+              <div class="sumber-txt">
+                <div class="sumber-name">SHP RBI BIG</div>
+                <div class="sumber-desc">Jaringan jalan, sungai, batas wilayah</div>
+              </div>
+            </div>
+            <div class="sumber-item">
+              <div class="sumber-dot" style="background:#16a34a"></div>
+              <div class="sumber-txt">
+                <div class="sumber-name">OpenStreetMap (OSM)</div>
+                <div class="sumber-desc">Basemap & jaringan jalan tambahan</div>
+              </div>
+            </div>
+            <div class="sumber-item">
+              <div class="sumber-dot" style="background:#7c3aed"></div>
+              <div class="sumber-txt">
+                <div class="sumber-name">Survei Lapangan 2026</div>
+                <div class="sumber-desc">Titik evakuasi, Titik Penempatan Hydrant</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- DIRECTION PANEL -->
+    <div id="dir-panel" class="dir-panel" style="display:none">
+      <div class="dir-hdr">
+        <span id="dir-title" class="dir-hdr-title">Petunjuk Arah</span>
+        <button class="dir-close" onclick="closeDir()">✕</button>
+      </div>
+      <div class="dir-steps-wrap" id="dir-steps"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- COORD BAR -->
+<div class="coord-bar">
+  <svg viewBox="0 0 16 16" width="12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="2.5"/><path d="M8 1C5.239 1 3 3.239 3 6c0 4.5 5 9 5 9s5-4.5 5-9c0-2.761-2.239-5-5-5z"/></svg>
+  <span id="coord-val">Arahkan kursor ke peta</span>
+</div>
+
+<!-- MAP HINT -->
+<div class="map-hint" id="map-hint"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/config.js"></script>
+<script src="js/map.js"></script>
+<script src="js/routing.js"></script>
+<script src="js/search.js"></script>
+<script>
+// ── SPLASH ─────────────────────────────────────────────────────
+function hideSplash() {
+  var s = document.getElementById('splash');
+  if (!s) return;
+  s.style.transition = 'opacity .6s ease, transform .6s ease';
+  s.style.opacity = '0';
+  s.style.transform = 'scale(1.04)';
+  setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); }, 650);
+}
+// Paksa hilang 3 detik — apapun yang terjadi
+setTimeout(hideSplash, 3000);
+window.addEventListener('load', function(){ setTimeout(hideSplash, 2000); });
+
+// ── SIDEBAR TOGGLE ──────────────────────────────────────────────
+function toggleSide() {
+  var s   = document.getElementById('side');
+  var ico = document.getElementById('side-ico');
+  s.classList.toggle('closed');
+  ico.innerHTML = s.classList.contains('closed')
+    ? '<polyline points="7,4 13,10 7,16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+    : '<polyline points="13,4 7,10 13,16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  var cb = document.querySelector('.coord-bar');
+  if (cb) cb.style.left = s.classList.contains('closed') ? '0' : 'var(--sw)';
+  setTimeout(function(){ if (typeof map !== 'undefined') map.invalidateSize(); }, 300);
+}
+
+// ── INIT MAP ────────────────────────────────────────────────────
+try {
+  initMap();
+} catch(e) {
+  console.error('[SiGAP] initMap() error:', e);
+}
+</script>
