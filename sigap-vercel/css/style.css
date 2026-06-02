@@ -1272,3 +1272,51 @@ svg { display: block; }
   font-size: 11px !important;
   color: #6b7c99 !important;
 }
+
+/* ══════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  :root { --sw: 280px; }
+
+  .side {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    z-index: 800;
+    transform: translateX(0);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    width: var(--sw) !important;
+  }
+
+  .side.closed {
+    transform: translateX(-100%);
+    width: var(--sw) !important;
+  }
+
+  .side-toggle {
+    right: -18px;
+  }
+
+  #map {
+    width: 100vw;
+  }
+
+  .coord-bar {
+    left: 0 !important;
+    font-size: 9px;
+  }
+
+  .dir-panel {
+    width: calc(100vw - 24px);
+    left: 12px;
+    right: 12px;
+  }
+
+  .hdr-search-wrap {
+    display: none;
+  }
+
+  .modal-box {
+    width: calc(100vw - 32px);
+  }
+}
